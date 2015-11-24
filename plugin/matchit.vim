@@ -186,7 +186,9 @@ function! s:Match_wrapper(word, forward, mode) range
     let curcol = match(matchline, regexp)
     " If there is no match, give up.
     if curcol == -1
-      return s:CleanUp(restore_options, a:mode, startline, startcol)
+      " HF: if there is no valid match, go to the closest end of pair
+      call s:CleanUp(restore_options, a:mode, startline, startcol)
+      return s:MultiMatch("W", "n")
     endif
     let endcol = matchend(matchline, regexp)
     let suf = strlen(matchline) - endcol
