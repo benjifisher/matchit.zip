@@ -706,6 +706,9 @@ fun! s:MultiMatch(spflag, mode)
   else
     let skip = 's:comment\|string'
   endif
+  " HF: 'execute restore_cursor' will change v:count1, we need to get the
+  " original vcount before it's changed 
+  let level = v:count1
   let skip = s:ParseSkip(skip)
   " let restore_cursor = line(".") . "G" . virtcol(".") . "|"
   " normal! H
@@ -729,7 +732,6 @@ fun! s:MultiMatch(spflag, mode)
     execute "if " . skip . "| let skip = '0' | endif"
   endif
   mark '
-  let level = v:count1
   while level
     if searchpair(openpat, '', closepat, a:spflag, skip) < 1
       call s:CleanUp(restore_options, a:mode, startline, startcol)
