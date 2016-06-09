@@ -73,11 +73,9 @@ for how to specify matching patterns.
 MODES:			*matchit-modes* *matchit-v_%* *matchit-o_%*
 
 Mostly, % and related motions (|g%| and |[%| and |]%|) work just like built-in
-|motion| commands in |Operator-pending| and |Visual| modes.  However, you
-cannot make these motions |linewise| or |characterwise|, since the |:omap|s
-that define them start with "v" in order to make the default behavior
-inclusive.  (See |o_v|.)  In other words, "dV%" will not work.  The
-work-around is to go through Visual mode:  "V%d" will work.
+|motion| commands in |Operator-pending| and |Visual| modes; the default behavior
+of these motions is inclusive. However, you can make these motions |linewise|.
+(See |o_V|.)  In other words, "dV%" will work.
 
 LANGUAGES:					*matchit-languages*
 
