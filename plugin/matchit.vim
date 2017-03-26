@@ -261,8 +261,8 @@ function! s:Match_wrapper(word, forward, mode) range
   let restore_cursor = virtcol(".") . "|"
   normal! g0
   let restore_cursor = line(".") . "G" .  virtcol(".") . "|zs" . restore_cursor
-  normal! H
-  let restore_cursor = "normal!" . line(".") . "Gzt" . restore_cursor
+  keepjumps normal! H
+  let restore_cursor = "keepjumps normal!" . line(".") . "Gzt" . restore_cursor
   execute restore_cursor
   call cursor(0, curcol + 1)
   " normal! 0
@@ -700,13 +700,13 @@ fun! s:MultiMatch(spflag, mode)
   endif
   let skip = s:ParseSkip(skip)
   " let restore_cursor = line(".") . "G" . virtcol(".") . "|"
-  " normal! H
+  " keepjumps normal! H
   " let restore_cursor = "normal!" . line(".") . "Gzt" . restore_cursor
   let restore_cursor = virtcol(".") . "|"
   normal! g0
   let restore_cursor = line(".") . "G" .  virtcol(".") . "|zs" . restore_cursor
-  normal! H
-  let restore_cursor = "normal!" . line(".") . "Gzt" . restore_cursor
+  keepjumps normal! H
+  let restore_cursor = "keepjumps normal!" . line(".") . "Gzt" . restore_cursor
   execute restore_cursor
 
   " Third step: call searchpair().
