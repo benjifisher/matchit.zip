@@ -1,6 +1,9 @@
 "  matchit.vim: (global plugin) Extended "%" matching
+"  Last Change: 2017 March 26
 "  Maintainer:  Benji Fisher PhD   <benji@member.AMS.org>
 "  Version:     1.13.2, for Vim 6.3+
+"		Fix from Fernando Torres included.
+"		Improvement from Ken Takata included.
 "  URL:		http://www.vim.org/script.php?script_id=39
 "  URL:		https://github.com/benjifisher/matchit.zip
 
@@ -48,38 +51,25 @@ let s:patBR = ""
 let s:save_cpo = &cpo
 set cpo&vim
 
-nnoremap <silent> <Plug>MatchitNormalForward     :<C-U>call <SID>Match_wrapper('',1,'n')<CR>
-nnoremap <silent> <Plug>MatchitNormalBackward    :<C-U>call <SID>Match_wrapper('',0,'n')<CR>
-vnoremap <silent> <Plug>MatchitVisualForward     :<C-U>call <SID>Match_wrapper('',1,'v')<CR>m'gv``
-vnoremap <silent> <Plug>MatchitVisualBackward    :<C-U>call <SID>Match_wrapper('',0,'v')<CR>m'gv``
-onoremap <silent> <Plug>MatchitOperationForward  v:<C-U>call <SID>Match_wrapper('',1,'o')<CR>
-onoremap <silent> <Plug>MatchitOperationBackward v:<C-U>call <SID>Match_wrapper('',0,'o')<CR>
-
-nmap <silent> %  <Plug>MatchitNormalForward
-nmap <silent> g% <Plug>MatchitNormalBackward
-vmap <silent> %  <Plug>MatchitVisualForward
-vmap <silent> g% <Plug>MatchitVisualBackward
-omap <silent> %  <Plug>MatchitOperationForward
-omap <silent> g% <Plug>MatchitOperationBackward
+nnoremap <silent> %  :<C-U>call <SID>Match_wrapper('',1,'n') <CR>
+nnoremap <silent> g% :<C-U>call <SID>Match_wrapper('',0,'n') <CR>
+vnoremap <silent> %  :<C-U>call <SID>Match_wrapper('',1,'v') <CR>m'gv``
+vnoremap <silent> g% :<C-U>call <SID>Match_wrapper('',0,'v') <CR>m'gv``
+onoremap <silent> %  v:<C-U>call <SID>Match_wrapper('',1,'o') <CR>
+onoremap <silent> g% v:<C-U>call <SID>Match_wrapper('',0,'o') <CR>
 
 " Analogues of [{ and ]} using matching patterns:
-nnoremap <silent> <Plug>MatchitNormalMultiBackward :<C-U>call <SID>MultiMatch("bW", "n")<CR>
-nnoremap <silent> <Plug>MatchitNormalMultiForward  :<C-U>call <SID>MultiMatch("W",  "n")<CR>
-vnoremap <silent> <Plug>MatchitVisualMultiBackward :<C-U>call <SID>MultiMatch("bW", "n") <CR>m'gv``
-vnoremap <silent> <Plug>MatchitVisualMultiForward  :<C-U>call <SID>MultiMatch("W",  "n") <CR>m'gv``
-onoremap <silent> <Plug>MatchitOperationMultiBackward v:<C-U>call <SID>MultiMatch("bW", "o")<CR>
-onoremap <silent> <Plug>MatchitOperationMultiForward  v:<C-U>call <SID>MultiMatch("W",  "o")<CR>
-
-nmap <silent> [% <Plug>MatchitNormalMultiBackward
-nmap <silent> ]% <Plug>MatchitNormalMultiForward
-vmap <silent> [% <Plug>MatchitVisualMultiBackward
-vmap <silent> ]% <Plug>MatchitVisualMultiForward
-omap <silent> [% <Plug>MatchitOperationMultiBackward
-omap <silent> ]% <Plug>MatchitOperationMultiForward
+nnoremap <silent> [% :<C-U>call <SID>MultiMatch("bW", "n") <CR>
+nnoremap <silent> ]% :<C-U>call <SID>MultiMatch("W",  "n") <CR>
+vmap [% <Esc>[%m'gv``
+vmap ]% <Esc>]%m'gv``
+" vnoremap <silent> [% :<C-U>call <SID>MultiMatch("bW", "v") <CR>m'gv``
+" vnoremap <silent> ]% :<C-U>call <SID>MultiMatch("W",  "v") <CR>m'gv``
+onoremap <silent> [% v:<C-U>call <SID>MultiMatch("bW", "o") <CR>
+onoremap <silent> ]% v:<C-U>call <SID>MultiMatch("W",  "o") <CR>
 
 " text object:
-vnoremap <silent> <Plug>MatchitVisualTextObject <Plug>MatchitVisualMultiBackward<Plug>MatchitVisualMultiForward
-vmap a% <Plug>MatchitVisualTextObject
+vmap a% <Esc>[%v]%
 
 " Auto-complete mappings:  (not yet "ready for prime time")
 " TODO Read :help write-plugin for the "right" way to let the user
@@ -134,9 +124,8 @@ function! s:Match_wrapper(word, forward, mode) range
     execute "let match_words =" b:match_words
   endif
 " Thanks to Preben "Peppe" Guldberg and Bram Moolenaar for this suggestion!
-  if (match_words != s:last_words) || (&mps != s:last_mps) ||
-    \ exists("b:match_debug")
-    let s:last_words = match_words
+  if (match_words != s:last_words) || (&mps != s:last_mps)
+      \ || exists("b:match_debug")
     let s:last_mps = &mps
     " The next several lines were here before
     " BF started messing with this script.
@@ -145,9 +134,10 @@ function! s:Match_wrapper(word, forward, mode) range
     " let default = substitute(escape(&mps, '[$^.*~\\/?]'), '[,:]\+',
     "  \ '\\|', 'g').'\|\/\*\|\*\/\|#if\>\|#ifdef\>\|#else\>\|#elif\>\|#endif\>'
     let default = escape(&mps, '[$^.*~\\/?]') . (strlen(&mps) ? "," : "") .
-      \ '\/\*:\*\/,#if\%(def\)\=:#else\>:#elif\>:#endif\>'
+      \ '\/\*:\*\/,#\s*if\%(def\)\=:#\s*else\>:#\s*elif\>:#\s*endif\>'
     " s:all = pattern with all the keywords
     let match_words = match_words . (strlen(match_words) ? "," : "") . default
+    let s:last_words = match_words
     if match_words !~ s:notslash . '\\\d'
       let s:do_BR = 0
       let s:pat = match_words
@@ -371,7 +361,7 @@ fun! s:InsertRefs(groupBR, prefix, group, suffix, matchline)
       execute s:Ref(ini, d, "start", "len")
       let ini = strpart(ini, 0, start) . backref . strpart(ini, start+len)
       let tailBR = substitute(tailBR, s:notslash . '\zs\\' . d,
-	\ escape(backref, '\\'), 'g')
+	\ escape(backref, '\\&'), 'g')
     endif
     let d = d-1
   endwhile
@@ -663,7 +653,7 @@ fun! s:MultiMatch(spflag, mode)
   "   s:all	regexp based on s:pat and the default groups
   " This part is copied and slightly modified from s:Match_wrapper().
   let default = escape(&mps, '[$^.*~\\/?]') . (strlen(&mps) ? "," : "") .
-    \ '\/\*:\*\/,#if\%(def\)\=:#else\>:#elif\>:#endif\>'
+    \ '\/\*:\*\/,#\s*if\%(def\)\=:#\s*else\>:#\s*elif\>:#\s*endif\>'
   " Allow b:match_words = "GetVimMatchWords()" .
   if b:match_words =~ ":"
     let match_words = b:match_words
@@ -682,8 +672,8 @@ fun! s:MultiMatch(spflag, mode)
       let s:do_BR = 1
       let s:pat = s:ParseWords(match_words)
     endif
-    let s:all = '\%(' . substitute(s:pat . (strlen(s:pat)?",":"") . default,
-      \	'[,:]\+','\\|','g') . '\)'
+    let s:all = '\%(' . substitute(s:pat . (strlen(s:pat) ? "," : "") . default,
+	\ '[,:]\+', '\\|', 'g') . '\)'
     if exists("b:match_debug")
       let b:match_pat = s:pat
     endif
@@ -823,5 +813,6 @@ fun! s:ParseSkip(str)
 endfun
 
 let &cpo = s:save_cpo
+unlet s:save_cpo
 
 " vim:sts=2:sw=2:
