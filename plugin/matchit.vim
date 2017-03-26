@@ -181,7 +181,9 @@ function! s:Match_wrapper(word, forward, mode) range
     let curcol = match(matchline, regexp)
     " If there is no match, give up.
     if curcol == -1
-      return s:CleanUp(restore_options, a:mode, startline, startcol)
+      " HF: if there is no valid match, go to the closest end of pair
+      call s:CleanUp(restore_options, a:mode, startline, startcol)
+      return s:MultiMatch("W", "n")
     endif
     let endcol = matchend(matchline, regexp)
     let suf = strlen(matchline) - endcol
@@ -698,6 +700,9 @@ fun! s:MultiMatch(spflag, mode)
   else
     let skip = 's:comment\|string'
   endif
+  " HF: 'execute restore_cursor' will change v:count1, we need to get the
+  " original vcount before it's changed 
+  let level = v:count1
   let skip = s:ParseSkip(skip)
   " let restore_cursor = line(".") . "G" . virtcol(".") . "|"
   " normal! H
@@ -721,7 +726,6 @@ fun! s:MultiMatch(spflag, mode)
     execute "if " . skip . "| let skip = '0' | endif"
   endif
   mark '
-  let level = v:count1
   while level
     if searchpair(openpat, '', closepat, a:spflag, skip) < 1
       call s:CleanUp(restore_options, a:mode, startline, startcol)
