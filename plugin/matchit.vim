@@ -43,6 +43,7 @@ endif
 let loaded_matchit = 1
 let s:last_mps = ""
 let s:last_words = ":"
+let s:patBR = ""
 
 let s:save_cpo = &cpo
 set cpo&vim
@@ -160,6 +161,10 @@ function! s:Match_wrapper(word, forward, mode) range
     if exists("b:match_debug")
       let b:match_pat = s:pat
     endif
+    " Reconstruct the version with unresolved backrefs.
+    let s:patBR = substitute(match_words.',',
+      \ s:notslash.'\zs[,:]*,[,:]*', ',', 'g')
+    let s:patBR = substitute(s:patBR, s:notslash.'\zs:\{2,}', ':', 'g')
   endif
 
   " Second step:  set the following local variables:
@@ -204,14 +209,10 @@ function! s:Match_wrapper(word, forward, mode) range
   " group = colon-separated list of patterns, one of which matches
   "       = ini:mid:fin or ini:fin
   "
-  " Reconstruct the version with unresolved backrefs.
-  let patBR = substitute(match_words.',',
-    \ s:notslash.'\zs[,:]*,[,:]*', ',', 'g')
-  let patBR = substitute(patBR, s:notslash.'\zs:\{2,}', ':', 'g')
   " Now, set group and groupBR to the matching group: 'if:endif' or
   " 'while:endwhile' or whatever.  A bit of a kluge:  s:Choose() returns
   " group . "," . groupBR, and we pick it apart.
-  let group = s:Choose(s:pat, matchline, ",", ":", prefix, suffix, patBR)
+  let group = s:Choose(s:pat, matchline, ",", ":", prefix, suffix, s:patBR)
   let i = matchend(group, s:notslash . ",")
   let groupBR = strpart(group, i)
   let group = strpart(group, 0, i-1)
@@ -673,6 +674,7 @@ fun! s:MultiMatch(spflag, mode)
     \ exists("b:match_debug")
     let s:last_words = match_words
     let s:last_mps = &mps
+    let match_words = match_words . (strlen(match_words) ? "," : "") . default
     if match_words !~ s:notslash . '\\\d'
       let s:do_BR = 0
       let s:pat = match_words
